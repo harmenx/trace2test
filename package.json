@@ -1,0 +1,66 @@
+{
+  "name": "trace2test",
+  "version": "0.1.0",
+  "description": "Turn recorded LLM agent traces into replayable regression tests",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "trace2test": "./dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/harmenx/trace2test.git"
+  },
+  "bugs": {
+    "url": "https://github.com/harmenx/trace2test/issues"
+  },
+  "homepage": "https://github.com/harmenx/trace2test#readme",
+  "keywords": [
+    "llm",
+    "evals",
+    "traces",
+    "testing",
+    "openai",
+    "opentelemetry",
+    "langfuse",
+    "agents"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.typecheck.json",
+    "test": "vitest run",
+    "lint": "eslint .",
+    "trace2test": "tsx src/cli.ts"
+  },
+  "dependencies": {
+    "ajv": "^8.20.0",
+    "commander": "^15.1.0",
+    "yaml": "^2.9.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.6.6",
+    "eslint": "^10.15.0",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.73.0",
+    "vitest": "^5.1.1"
+  }
+}

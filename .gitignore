@@ -1,0 +1,10 @@
+node_modules/
+dist/
+coverage/
+trace2test-results/
+examples/demo-agent/last-trace.jsonl
+*.log
+.env
+.env.*
+!.env.example
+.DS_Store
