@@ -1,0 +1,63 @@
+version: 1
+id: weather-in-paris
+name: Weather in Paris?
+source:
+  format: otel
+  id: 4bf92f3577b34da6a3ce929d0e0e4736
+  file: otel-genai.json
+recorded:
+  model: gpt-4o-mini
+  provider: openai
+  startedAt: 2026-03-18T15:04:05.000Z
+  durationMs: 1140
+  usage:
+    inputTokens: 144
+    outputTokens: 48
+    totalTokens: 192
+input:
+  messages:
+    - role: system
+      content: You are a weather assistant. Use get_weather before answering.
+    - role: user
+      content: Weather in Paris?
+  tools:
+    - name: get_weather
+      description: Get the current weather in a city
+      parameters:
+        type: object
+        properties:
+          location:
+            type: string
+            description: City name
+        required:
+          - location
+        additionalProperties: false
+fixtures:
+  - id: call_weather_paris
+    name: get_weather
+    arguments:
+      location: Paris
+    result: rainy, 57°F
+    match: subset
+assertions:
+  toolSequence:
+    mode: ordered
+    expected:
+      - name: get_weather
+        arguments:
+          location: Paris
+        match: subset
+  finalAnswer:
+    - type: regex
+      pattern: 57\s*°\s*F
+      flags: i
+    - type: contains
+      value: Paris
+  judge:
+    enabled: false
+    rubric: |-
+      The assistant was asked: Weather in Paris?
+      It should take the same kind of action as the recording: get_weather(location="Paris").
+      The answer should stay consistent with the recorded outcome, including: 57°F, Paris.
+      Wording can differ. The facts, the tool choice, and whether the request was answered cannot.
+    minScore: 0.7

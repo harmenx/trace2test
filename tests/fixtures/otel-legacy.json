@@ -1,0 +1,22 @@
+[
+  {
+    "traceId": "legacy-weather",
+    "spanId": "span-1",
+    "name": "openai.chat",
+    "startTime": "2026-03-01T12:00:00.000Z",
+    "endTime": "2026-03-01T12:00:01.200Z",
+    "attributes": {
+      "gen_ai.system": "openai",
+      "gen_ai.request.model": "gpt-4o-mini",
+      "gen_ai.operation.name": "chat",
+      "gen_ai.usage.prompt_tokens": 30,
+      "gen_ai.usage.completion_tokens": 12,
+      "gen_ai.prompt.0.role": "user",
+      "gen_ai.prompt.0.content": "Weather in Paris?",
+      "gen_ai.completion.0.role": "assistant",
+      "gen_ai.completion.0.tool_calls.0.id": "call_1",
+      "gen_ai.completion.0.tool_calls.0.name": "get_weather",
+      "gen_ai.completion.0.tool_calls.0.arguments": "{\"location\":\"Paris\"}"
+    }
+  }
+]

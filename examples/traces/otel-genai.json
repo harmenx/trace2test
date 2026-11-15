@@ -1,0 +1,134 @@
+{
+  "spans": [
+    {
+      "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
+      "spanId": "00f067aa0ba902b7",
+      "name": "chat gpt-4o-mini",
+      "startTime": "2026-03-18T15:04:05.000Z",
+      "endTime": "2026-03-18T15:04:05.420Z",
+      "attributes": {
+        "gen_ai.provider.name": "openai",
+        "gen_ai.operation.name": "chat",
+        "gen_ai.request.model": "gpt-4o-mini",
+        "gen_ai.response.model": "gpt-4o-mini",
+        "gen_ai.response.id": "chatcmpl-weather-1",
+        "gen_ai.response.finish_reasons": ["tool_calls"],
+        "gen_ai.usage.input_tokens": 48,
+        "gen_ai.usage.output_tokens": 16,
+        "gen_ai.tool.definitions": [
+          {
+            "type": "function",
+            "name": "get_weather",
+            "description": "Get the current weather in a city",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "location": { "type": "string", "description": "City name" }
+              },
+              "required": ["location"],
+              "additionalProperties": false
+            }
+          }
+        ],
+        "gen_ai.input.messages": [
+          {
+            "role": "system",
+            "parts": [{ "type": "text", "content": "You are a weather assistant. Use get_weather before answering." }]
+          },
+          {
+            "role": "user",
+            "parts": [{ "type": "text", "content": "Weather in Paris?" }]
+          }
+        ],
+        "gen_ai.output.messages": [
+          {
+            "role": "assistant",
+            "parts": [
+              {
+                "type": "tool_call",
+                "id": "call_weather_paris",
+                "name": "get_weather",
+                "arguments": { "location": "Paris" }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
+      "spanId": "10f067aa0ba902b8",
+      "parentSpanId": "00f067aa0ba902b7",
+      "name": "execute_tool get_weather",
+      "startTime": "2026-03-18T15:04:05.430Z",
+      "endTime": "2026-03-18T15:04:05.510Z",
+      "attributes": {
+        "gen_ai.operation.name": "execute_tool",
+        "gen_ai.tool.name": "get_weather",
+        "gen_ai.tool.call.id": "call_weather_paris",
+        "gen_ai.tool.type": "function",
+        "gen_ai.tool.call.arguments": { "location": "Paris" },
+        "gen_ai.tool.call.result": "rainy, 57°F"
+      }
+    },
+    {
+      "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
+      "spanId": "20f067aa0ba902b9",
+      "name": "chat gpt-4o-mini",
+      "startTime": "2026-03-18T15:04:05.520Z",
+      "endTime": "2026-03-18T15:04:06.140Z",
+      "attributes": {
+        "gen_ai.provider.name": "openai",
+        "gen_ai.operation.name": "chat",
+        "gen_ai.request.model": "gpt-4o-mini",
+        "gen_ai.response.model": "gpt-4o-mini",
+        "gen_ai.response.id": "chatcmpl-weather-2",
+        "gen_ai.response.finish_reasons": ["stop"],
+        "gen_ai.usage.input_tokens": 96,
+        "gen_ai.usage.output_tokens": 32,
+        "gen_ai.input.messages": [
+          {
+            "role": "system",
+            "parts": [{ "type": "text", "content": "You are a weather assistant. Use get_weather before answering." }]
+          },
+          {
+            "role": "user",
+            "parts": [{ "type": "text", "content": "Weather in Paris?" }]
+          },
+          {
+            "role": "assistant",
+            "parts": [
+              {
+                "type": "tool_call",
+                "id": "call_weather_paris",
+                "name": "get_weather",
+                "arguments": { "location": "Paris" }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "parts": [
+              {
+                "type": "tool_call_response",
+                "id": "call_weather_paris",
+                "response": "rainy, 57°F"
+              }
+            ]
+          }
+        ],
+        "gen_ai.output.messages": [
+          {
+            "role": "assistant",
+            "parts": [
+              {
+                "type": "text",
+                "content": "The weather in Paris is currently rainy with a temperature of 57°F."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

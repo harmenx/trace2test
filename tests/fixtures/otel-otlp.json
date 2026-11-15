@@ -1,0 +1,44 @@
+{
+  "resourceSpans": [
+    {
+      "resource": {
+        "attributes": [
+          { "key": "service.name", "value": { "stringValue": "support-agent" } }
+        ]
+      },
+      "scopeSpans": [
+        {
+          "scope": { "name": "genai" },
+          "spans": [
+            {
+              "traceId": "aabbccddeeff00112233445566778899",
+              "spanId": "0123456789abcdef",
+              "name": "chat gpt-4o-mini",
+              "startTimeUnixNano": "1710000000000000000",
+              "endTimeUnixNano": "1710000001500000000",
+              "attributes": [
+                { "key": "gen_ai.provider.name", "value": { "stringValue": "openai" } },
+                { "key": "gen_ai.operation.name", "value": { "stringValue": "chat" } },
+                { "key": "gen_ai.request.model", "value": { "stringValue": "gpt-4o-mini" } },
+                { "key": "gen_ai.usage.input_tokens", "value": { "intValue": "22" } },
+                { "key": "gen_ai.usage.output_tokens", "value": { "intValue": 6 } },
+                {
+                  "key": "gen_ai.input.messages",
+                  "value": {
+                    "stringValue": "[{\"role\":\"user\",\"parts\":[{\"type\":\"text\",\"content\":\"Weather in Paris?\"}]}]"
+                  }
+                },
+                {
+                  "key": "gen_ai.output.messages",
+                  "value": {
+                    "stringValue": "[{\"role\":\"assistant\",\"parts\":[{\"type\":\"text\",\"content\":\"It is rainy and 57°F in Paris.\"}]}]"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

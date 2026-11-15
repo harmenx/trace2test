@@ -1,0 +1,98 @@
+version: 1
+id: order-and-balance
+name: order-and-balance
+source:
+  format: openai
+  id: sess_order_balance_001
+  file: openai-chat.jsonl
+recorded:
+  model: gpt-4o-mini
+  provider: openai
+  startedAt: 2026-03-18T15:10:00.000Z
+  durationMs: 1020
+  usage:
+    inputTokens: 375
+    outputTokens: 72
+    totalTokens: 447
+input:
+  messages:
+    - role: system
+      content: You are a support agent. Use tools before answering. Do not invent order status or balances.
+    - role: user
+      content: What's the status of order A-1001 and the gift-card balance for customer c_9?
+  tools:
+    - name: lookup_order
+      description: Look up the status of an order by id
+      parameters:
+        type: object
+        properties:
+          orderId:
+            type: string
+        required:
+          - orderId
+        additionalProperties: false
+    - name: get_balance
+      description: Look up a customer's gift-card balance
+      parameters:
+        type: object
+        properties:
+          customerId:
+            type: string
+        required:
+          - customerId
+        additionalProperties: false
+fixtures:
+  - id: call_lookup_order
+    name: lookup_order
+    arguments:
+      orderId: A-1001
+    result:
+      orderId: A-1001
+      status: shipped
+      eta: 2026-04-02
+      carrier: UPS
+      customerId: c_9
+    match: subset
+  - id: call_get_balance
+    name: get_balance
+    arguments:
+      customerId: c_9
+    result:
+      customerId: c_9
+      currency: USD
+      amount: 25
+    match: subset
+assertions:
+  toolSequence:
+    mode: ordered
+    expected:
+      - name: lookup_order
+        arguments:
+          orderId: A-1001
+        match: subset
+      - name: get_balance
+        arguments:
+          customerId: c_9
+        match: subset
+  finalAnswer:
+    - type: contains
+      value: 2026-04-02
+    - type: regex
+      pattern: \$25\.00
+      flags: i
+    - type: contains
+      value: UPS
+  judge:
+    enabled: false
+    rubric: >-
+      The assistant was asked: What's the status of order A-1001 and the gift-card balance for
+      customer c_9?
+
+      It should take the same kind of action as the recording: lookup_order(orderId="A-1001");
+      get_balance(customerId="c_9").
+
+      The answer should stay consistent with the recorded outcome, including: 2026-04-02, $25.00,
+      UPS.
+
+      Wording can differ. The facts, the tool choice, and whether the request was answered cannot.
+    minScore: 0.7

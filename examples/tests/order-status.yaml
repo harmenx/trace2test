@@ -1,0 +1,82 @@
+version: 1
+id: order-status
+name: order-status
+source:
+  format: langfuse
+  id: a1b2c3d4e5f6789012345678abcdef01
+  file: langfuse.json
+recorded:
+  model: gpt-4o-mini
+  startedAt: 2026-03-18T16:02:11.000Z
+  durationMs: 1400
+  usage:
+    inputTokens: 145
+    outputTokens: 46
+    totalTokens: 191
+input:
+  messages:
+    - role: system
+      content: You look up orders. Reply with a JSON object and nothing else.
+    - role: user
+      content: What is the status of order A-1001? Reply with JSON.
+  tools:
+    - name: lookup_order
+      description: Look up the status of an order by id
+      parameters:
+        type: object
+        properties:
+          orderId:
+            type: string
+        required:
+          - orderId
+fixtures:
+  - id: call_lookup_order
+    name: lookup_order
+    arguments:
+      orderId: A-1001
+    result:
+      orderId: A-1001
+      status: shipped
+      eta: 2026-04-02
+      carrier: UPS
+      customerId: c_9
+    match: subset
+assertions:
+  toolSequence:
+    mode: ordered
+    expected:
+      - name: lookup_order
+        arguments:
+          orderId: A-1001
+        match: subset
+  finalAnswer:
+    - type: json-schema
+      schema:
+        type: object
+        additionalProperties: true
+        required:
+          - orderId
+          - status
+          - eta
+          - carrier
+        properties:
+          orderId:
+            type: string
+            const: A-1001
+          status:
+            type: string
+            const: shipped
+          eta:
+            type: string
+            const: 2026-04-02
+          carrier:
+            type: string
+            const: UPS
+  judge:
+    enabled: false
+    rubric: |-
+      The assistant was asked: What is the status of order A-1001? Reply with JSON.
+      It should take the same kind of action as the recording: lookup_order(orderId="A-1001").
+      The answer should stay consistent with the recorded outcome, including: 2026-04-02, UPS.
+      Wording can differ. The facts, the tool choice, and whether the request was answered cannot.
+    minScore: 0.7
