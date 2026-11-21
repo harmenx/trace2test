@@ -8,6 +8,7 @@ export { DEFAULT_PRICES, estimateCost, lookupPrice } from "./replay/pricing.js";
 export { runSuite } from "./replay/runner.js";
 export { diffResults, exitCodeFor } from "./report/diff.js";
 export { renderMarkdownReport } from "./report/markdown.js";
+export { renderJobSummary } from "./report/summary.js";
 export { renderTerminalReport } from "./report/terminal.js";
 export type {
   Message,

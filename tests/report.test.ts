@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { diffResults, exitCodeFor } from "../src/report/diff.js";
 import { renderMarkdownReport } from "../src/report/markdown.js";
+import { renderJobSummary } from "../src/report/summary.js";
 import { renderTerminalReport } from "../src/report/terminal.js";
 import type { SuiteResult, TestResult } from "../src/schema.js";
 
@@ -96,5 +97,14 @@ describe("baseline diff", () => {
     expect(markdown).toContain("# trace2test report");
     expect(markdown).toContain("### Regressions");
     expect(markdown).toContain("order-status");
+
+    const summary = renderJobSummary({
+      ...result,
+      diff: diffResults(suite([testResult("weather-in-paris", "pass"), testResult("order-status", "pass")]), result, "baseline.json"),
+    });
+    expect(summary).toContain("## trace2test");
+    expect(summary).toContain("### Regressions");
+    expect(summary).toContain("order-status");
+    expect(summary).not.toContain("### Improvements");
   });
 });
