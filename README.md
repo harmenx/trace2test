@@ -34,7 +34,7 @@ npx trace2test run examples/tests --model gpt-4o-mini
 npx trace2test run examples/tests --model gpt-4.1-mini --baseline trace2test-results/results.json
 ```
 
-A run writes three things: a summary on stdout, `trace2test-results/results.json`, and `trace2test-results/report.md`. With `--baseline`, the process exits 1 when a test that used to pass now fails, which is the check you want in CI. Failures that were already failing are reported and do not fail the job.
+A run writes a summary on stdout, plus `trace2test-results/results.json`, `report.md`, and a shorter `summary.md` for CI job pages. With `--baseline`, the process exits 1 when a test that used to pass now fails, which is the check you want in CI. Failures that were already failing are reported and do not fail the job.
 
 ## Architecture
 
@@ -209,6 +209,25 @@ baseline trace2test-results/results.json (gpt-4o-mini)
 
 Tool-sequence similarity is `matched / max(expected, actual)` with in-order matching. Both empty is 1. Score moves are printed either way; only `--fail-on-score-drop` turns a drop into a failing exit.
 
+`--repeat 5` runs every case five times. A case that both passes and fails in that set is marked flaky in the terminal output, `report.md`, and `summary.md`. It counts as a failure, so CI goes red. A case that fails every time is a normal failure, not a flake.
+
+## GitHub Action
+
+`action.yml` is a composite action. Build the CLI first (`npm ci && npm run build`); the action runs `dist/cli.js`. It replays the YAML cases, appends `summary.md` to the job summary, and uploads `report.md` and `results.json` as an artifact. The step fails when the CLI exits non-zero: any failure without a baseline, or a new failure when `baseline` points at a previous `results.json`.
+
+Copy `examples/workflows/trace2test.yml` to `.github/workflows/` and point `baseline` at a known-good `results.json`. Set `OPENAI_API_KEY` in the job environment. `repeat` is optional and defaults to 1.
+
+## Pytest
+
+Python is optional. The core tool stays TypeScript. `trace2test export` writes a single pytest module that replays the same fixtures and assertions against `OPENAI_BASE_URL`:
+
+```bash
+npx trace2test export examples/tests --format pytest --out examples/pytest/test_agent_sessions.py
+OPENAI_BASE_URL=http://127.0.0.1:8787/v1 OPENAI_API_KEY=local pytest examples/pytest/test_agent_sessions.py
+```
+
+The checked-in module is that export. It needs pytest and nothing else. Judge rubrics are not translated; run those with `trace2test run --judge`.
+
 ## Trace formats
 
 `generate` detects the format per file. Pass `--format otel|langfuse|openai` when a file is ambiguous.
@@ -238,10 +257,11 @@ With `OPENAI_API_KEY` set and no `--scripted` flag, it calls a real model, runs 
 
 ```text
 trace2test generate <traces...> --out <dir> [--format otel|langfuse|openai] [--judge]
+trace2test export <tests> --format pytest --out <file>
 trace2test run <tests> --model <id>
   [--base-url <url>] [--api-key <key>] [--out <dir>]
   [--baseline <results.json>] [--judge] [--judge-model <id>]
-  [--max-steps <n>] [--fail-on-score-drop] [--prices <file>]
+  [--max-steps <n>] [--repeat <n>] [--fail-on-score-drop] [--prices <file>]
 ```
 
 `--max-steps` defaults to 8. A test that is still calling tools at the limit fails. A tool call that matches no fixture is returned to the model as an error and fails the test. Replay sends `temperature: 0`.
@@ -259,14 +279,11 @@ npm test
 npm run build
 ```
 
-Tests use a scripted model and the demo server. They do not call a hosted API. CI runs lint, typecheck, test, and build on Node 20 and 22.
+Tests use a scripted model and the demo server. They do not call a hosted API. One test runs the exported pytest module, so CI installs pytest first. The Node checks are lint, typecheck, test, and build on Node 20 and 22.
 
 ## Roadmap
 
-- Export the same cases as pytest modules.
 - Import LangSmith and Arize Phoenix traces.
-- A GitHub Action that runs the suite and uploads `report.md`.
-- Flaky-test detection across repeated replays of the same case.
 
 ## License
 
