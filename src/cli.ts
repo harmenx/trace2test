@@ -4,6 +4,7 @@ import { pathToFileURL } from "node:url";
 
 import { Command, CommanderError } from "commander";
 
+import { exportCommand } from "./commands/export.js";
 import { generateCommand } from "./commands/generate.js";
 import { runCommand } from "./commands/run.js";
 import { Trace2TestError } from "./errors.js";
@@ -27,6 +28,16 @@ export async function main(argv: string[]): Promise<number> {
     .option("--judge", "Turn on the LLM-judge rubric in the generated tests", false)
     .action(async (traces: string[], opts: { out: string; format?: string; judge: boolean }) => {
       await generateCommand({ inputs: traces, outDir: opts.out, format: opts.format, judge: opts.judge });
+    });
+
+  program
+    .command("export")
+    .description("Turn YAML cases into another test runner")
+    .argument("<tests>", "YAML test file or directory")
+    .requiredOption("--format <format>", "pytest")
+    .requiredOption("--out <file>", "File to write")
+    .action(async (tests: string, opts: { format: string; out: string }) => {
+      await exportCommand({ inputs: [tests], format: opts.format, outFile: opts.out });
     });
 
   program

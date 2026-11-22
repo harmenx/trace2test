@@ -1,6 +1,8 @@
+export { exportCommand } from "./commands/export.js";
 export { generateCommand } from "./commands/generate.js";
 export { runCommand } from "./commands/run.js";
 export { Trace2TestError } from "./errors.js";
+export { renderPytestModule } from "./export/pytest.js";
 export { traceToTestCase, writeTestCases } from "./generate/index.js";
 export { ingestFile, ingestPaths } from "./ingest/index.js";
 export { createOpenAIClient, type ModelClient, type ChatRequest, type ChatResponse } from "./replay/client.js";
