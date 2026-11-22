@@ -8,11 +8,20 @@ export function renderTerminalReport(result: SuiteResult, options?: { color?: bo
   lines.push("");
   const width = Math.min(48, Math.max(12, ...result.tests.map((test) => test.id.length)));
   for (const test of result.tests) {
-    const label = test.status === "pass" ? paint.green("PASS") : test.status === "error" ? paint.red("ERROR") : paint.red("FAIL");
+    const label = test.flaky
+      ? paint.yellow("FLAKY")
+      : test.status === "pass"
+        ? paint.green("PASS")
+        : test.status === "error"
+          ? paint.red("ERROR")
+          : paint.red("FAIL");
     const similarity = test.toolSequence.similarity.toFixed(2);
     lines.push(
       `  ${label}  ${test.id.padEnd(width)}  tools ${similarity}  ${formatMs(test.latencyMs).padStart(7)}  ${formatUsd(test.costUsd)}`,
     );
+    if (test.flaky) {
+      lines.push(`        ${paint.dim("-")} passed ${test.flaky.passed} of ${test.flaky.runs} runs`);
+    }
     for (const assertion of test.assertions) {
       if (assertion.status === "pass" || assertion.status === "skipped") continue;
       lines.push(`        ${paint.dim("-")} ${assertion.detail}`);
@@ -21,7 +30,7 @@ export function renderTerminalReport(result: SuiteResult, options?: { color?: bo
   lines.push("");
   const summary = result.summary;
   lines.push(
-    `${summary.total} tests, ${paint.green(`${summary.passed} passed`)}, ${summary.failed > 0 ? paint.red(`${summary.failed} failed`) : "0 failed"}, ${summary.errors} errors, ${formatMs(summary.latencyMs)}, ${formatUsd(summary.costUsd)}`,
+    `${summary.total} tests, ${paint.green(`${summary.passed} passed`)}, ${summary.failed > 0 ? paint.red(`${summary.failed} failed`) : "0 failed"}, ${summary.flaky ? paint.yellow(`${summary.flaky} flaky`) + ", " : ""}${summary.errors} errors, ${formatMs(summary.latencyMs)}, ${formatUsd(summary.costUsd)}`,
   );
   if (result.diff) {
     lines.push("");

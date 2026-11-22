@@ -9,7 +9,9 @@ export function renderMarkdownReport(result: SuiteResult): string {
   lines.push(`- Model: \`${result.model}\``);
   if (result.baseUrl) lines.push(`- Base URL: \`${result.baseUrl}\``);
   lines.push(`- Generated: ${result.generatedAt}`);
-  lines.push(`- Result: ${summary.passed}/${summary.total} passed, ${summary.failed} failed, ${summary.errors} errors`);
+  lines.push(
+    `- Result: ${summary.passed}/${summary.total} passed, ${summary.failed} failed, ${summary.flaky ?? 0} flaky, ${summary.errors} errors`,
+  );
   lines.push(`- Latency: ${formatMs(summary.latencyMs)}`);
   lines.push(`- Tokens: ${summary.inputTokens} in / ${summary.outputTokens} out`);
   lines.push(`- Estimated cost: ${formatUsd(summary.costUsd)}`);
@@ -18,7 +20,7 @@ export function renderMarkdownReport(result: SuiteResult): string {
   lines.push("| --- | --- | ---: | ---: | ---: |");
   for (const test of result.tests) {
     lines.push(
-      `| ${cell(test.id)} | ${test.status} | ${test.toolSequence.similarity.toFixed(2)} | ${formatMs(test.latencyMs)} | ${formatUsd(test.costUsd)} |`,
+      `| ${cell(test.id)} | ${test.flaky ? "flaky" : test.status} | ${test.toolSequence.similarity.toFixed(2)} | ${formatMs(test.latencyMs)} | ${formatUsd(test.costUsd)} |`,
     );
   }
   lines.push("");
@@ -26,7 +28,9 @@ export function renderMarkdownReport(result: SuiteResult): string {
   for (const test of result.tests) {
     lines.push(`## ${test.name}`);
     lines.push("");
-    lines.push(`Status: **${test.status}**. Tool sequence similarity ${test.toolSequence.similarity.toFixed(2)}.`);
+    lines.push(
+      `Status: **${test.flaky ? "flaky" : test.status}**. Tool sequence similarity ${test.toolSequence.similarity.toFixed(2)}.${test.flaky ? ` Passed ${test.flaky.passed} of ${test.flaky.runs} runs.` : ""}`,
+    );
     lines.push("");
     lines.push("| Assertion | Result | Detail |");
     lines.push("| --- | --- | --- |");

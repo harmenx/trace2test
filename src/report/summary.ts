@@ -7,14 +7,14 @@ export function renderJobSummary(result: SuiteResult): string {
   lines.push("## trace2test");
   lines.push("");
   lines.push(
-    `**${result.model}** — ${summary.passed} passed, ${summary.failed} failed, ${summary.errors} errors in ${formatMs(summary.latencyMs)} (${formatUsd(summary.costUsd)})`,
+    `**${result.model}** — ${summary.passed} passed, ${summary.failed} failed, ${summary.flaky ?? 0} flaky, ${summary.errors} errors in ${formatMs(summary.latencyMs)} (${formatUsd(summary.costUsd)})`,
   );
   lines.push("");
   lines.push("| Test | Status | Tool similarity | Latency |");
   lines.push("| --- | --- | ---: | ---: |");
   for (const test of result.tests) {
     lines.push(
-      `| ${cell(test.id)} | ${test.status} | ${test.toolSequence.similarity.toFixed(2)} | ${formatMs(test.latencyMs)} |`,
+      `| ${cell(test.id)} | ${test.flaky ? "flaky" : test.status} | ${test.toolSequence.similarity.toFixed(2)} | ${formatMs(test.latencyMs)} |`,
     );
   }
   lines.push("");
@@ -27,6 +27,15 @@ export function renderJobSummary(result: SuiteResult): string {
       lines.push("No regressions.");
       lines.push("");
     }
+  }
+  const flaky = result.tests.filter((test) => test.flaky);
+  if (flaky.length > 0) {
+    lines.push("### Flaky");
+    lines.push("");
+    for (const test of flaky) {
+      lines.push(`- **${test.id}**: passed ${test.flaky?.passed ?? 0} of ${test.flaky?.runs ?? 0} runs`);
+    }
+    lines.push("");
   }
   return `${lines.join("\n").trimEnd()}\n`;
 }

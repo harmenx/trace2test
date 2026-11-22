@@ -87,6 +87,12 @@ describe("baseline diff", () => {
     const terminal = renderTerminalReport(result, { color: false });
     expect(terminal).toContain("PASS");
     expect(terminal).toContain("FAIL");
+    const flaky = renderTerminalReport(
+      suite([{ ...testResult("flip", "fail"), flaky: { runs: 4, passed: 3, failed: 1 } }], "gpt-4o-mini"),
+      { color: false },
+    );
+    expect(flaky).toContain("FLAKY");
+    expect(flaky).toContain("passed 3 of 4 runs");
     expect(terminal).toContain("missing fact");
     expect(terminal).not.toContain("\x1b[");
 
@@ -106,5 +112,10 @@ describe("baseline diff", () => {
     expect(summary).toContain("### Regressions");
     expect(summary).toContain("order-status");
     expect(summary).not.toContain("### Improvements");
+    const flakySummary = renderJobSummary(
+      suite([{ ...testResult("flip", "fail", 0.5), flaky: { runs: 4, passed: 1, failed: 3 } }]),
+    );
+    expect(flakySummary).toContain("### Flaky");
+    expect(flakySummary).toContain("passed 1 of 4 runs");
   });
 });
