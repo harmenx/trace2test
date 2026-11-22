@@ -188,6 +188,13 @@ export const TestResultSchema = z.object({
   finalOutput: z.string().nullable(),
   error: z.string().optional(),
   transcript: z.array(MessageSchema),
+  flaky: z
+    .object({
+      runs: z.number().int().positive(),
+      passed: z.number().int().nonnegative(),
+      failed: z.number().int().nonnegative(),
+    })
+    .optional(),
 });
 export type TestResult = z.infer<typeof TestResultSchema>;
 
@@ -226,6 +233,7 @@ export const SuiteResultSchema = z.object({
     costUsd: z.number().nullable(),
     inputTokens: z.number(),
     outputTokens: z.number(),
+    flaky: z.number().int().nonnegative().optional(),
   }),
   tests: z.array(TestResultSchema),
   diff: DiffReportSchema.optional(),

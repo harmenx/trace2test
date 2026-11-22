@@ -28,6 +28,10 @@ inputs:
     description: Maximum model calls per test
     required: false
     default: "8"
+  repeat:
+    description: Replay each test this many times. Mixed pass/fail results are marked flaky.
+    required: false
+    default: "1"
   artifact-name:
     description: Artifact name for the markdown and JSON reports
     required: false
@@ -45,6 +49,7 @@ runs:
         TRACE2TEST_OUT: ${{ inputs.out }}
         TRACE2TEST_FAIL_ON_SCORE_DROP: ${{ inputs.fail-on-score-drop }}
         TRACE2TEST_MAX_STEPS: ${{ inputs.max-steps }}
+        TRACE2TEST_REPEAT: ${{ inputs.repeat }}
       run: |
         set -euo pipefail
         if [ -n "${TRACE2TEST_BASE_URL_INPUT}" ]; then
@@ -56,6 +61,9 @@ runs:
           --out "${TRACE2TEST_OUT}"
           --max-steps "${TRACE2TEST_MAX_STEPS}"
         )
+        if [ "${TRACE2TEST_REPEAT}" != "1" ]; then
+          args+=(--repeat "${TRACE2TEST_REPEAT}")
+        fi
         if [ -n "${TRACE2TEST_BASELINE}" ]; then
           args+=(--baseline "${TRACE2TEST_BASELINE}")
         fi

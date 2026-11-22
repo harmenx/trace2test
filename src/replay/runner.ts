@@ -12,6 +12,7 @@ export interface RunOptions {
   judge?: boolean;
   judgeModel?: string;
   maxSteps?: number;
+  repeat?: number;
   now?: Date;
   baseUrl?: string;
 }
@@ -22,9 +23,18 @@ const JUDGE_SYSTEM = [
 ].join(" ");
 
 export async function runSuite(options: RunOptions): Promise<SuiteResult> {
+  const repeat = options.repeat ?? 1;
   const tests: TestResult[] = [];
   for (const test of options.tests) {
-    tests.push(await runOne(test, options));
+    if (repeat <= 1) {
+      tests.push(await runOne(test, options));
+      continue;
+    }
+    const attempts: TestResult[] = [];
+    for (let index = 0; index < repeat; index += 1) {
+      attempts.push(await runOne(test, options));
+    }
+    tests.push(combineAttempts(attempts));
   }
   return {
     version: 1,
@@ -33,6 +43,22 @@ export async function runSuite(options: RunOptions): Promise<SuiteResult> {
     ...(options.baseUrl ? { baseUrl: options.baseUrl } : {}),
     summary: summarize(tests),
     tests,
+  };
+}
+
+function combineAttempts(attempts: TestResult[]): TestResult {
+  const first = attempts[0];
+  if (!first) {
+    throw new Error("repeat produced no attempts");
+  }
+  const passed = attempts.filter((attempt) => attempt.status === "pass").length;
+  const failed = attempts.length - passed;
+  if (passed === 0 || failed === 0) return attempts.at(-1) ?? first;
+  const failure = attempts.find((attempt) => attempt.status !== "pass") ?? first;
+  return {
+    ...failure,
+    status: "fail",
+    flaky: { runs: attempts.length, passed, failed },
   };
 }
 
@@ -226,6 +252,7 @@ function add(target: { inputTokens: number; outputTokens: number; totalTokens: n
 export function summarize(tests: TestResult[]): SuiteResult["summary"] {
   const failed = tests.filter((test) => test.status === "fail").length;
   const errors = tests.filter((test) => test.status === "error").length;
+  const flaky = tests.filter((test) => test.flaky).length;
   const priced = tests.some((test) => (test.usage.inputTokens > 0 || test.usage.outputTokens > 0) && test.costUsd === null);
   const cost = tests.reduce((sum, test) => sum + (test.costUsd ?? 0), 0);
   return {
@@ -237,6 +264,7 @@ export function summarize(tests: TestResult[]): SuiteResult["summary"] {
     costUsd: priced ? null : round(cost),
     inputTokens: tests.reduce((sum, test) => sum + test.usage.inputTokens, 0),
     outputTokens: tests.reduce((sum, test) => sum + test.usage.outputTokens, 0),
+    ...(flaky > 0 ? { flaky } : {}),
   };
 }
 

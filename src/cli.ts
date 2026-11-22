@@ -52,6 +52,7 @@ export async function main(argv: string[]): Promise<number> {
     .option("--judge", "Score every LLM-judge rubric, including ones left disabled", false)
     .option("--judge-model <id>", "Model used for the judge (default: --model)")
     .option("--max-steps <n>", "Maximum model calls per test", "8")
+    .option("--repeat <n>", "Replay each test this many times and flag mixed results", "1")
     .option("--fail-on-score-drop", "Treat a drop in tool-sequence similarity as a regression", false)
     .option("--prices <file>", "JSON price table, USD per 1M tokens, merged over the built-in estimates")
     .action(async (tests: string, opts: {
@@ -63,12 +64,17 @@ export async function main(argv: string[]): Promise<number> {
       judge: boolean;
       judgeModel?: string;
       maxSteps: string;
+      repeat: string;
       failOnScoreDrop: boolean;
       prices?: string;
     }) => {
       const maxSteps = Number(opts.maxSteps);
       if (!Number.isInteger(maxSteps) || maxSteps < 1) {
         throw new Trace2TestError("--max-steps must be a positive integer.");
+      }
+      const repeat = Number(opts.repeat);
+      if (!Number.isInteger(repeat) || repeat < 1) {
+        throw new Trace2TestError("--repeat must be a positive integer.");
       }
       const { exitCode } = await runCommand({
         inputs: [tests],
@@ -80,6 +86,7 @@ export async function main(argv: string[]): Promise<number> {
         judge: opts.judge,
         judgeModel: opts.judgeModel,
         maxSteps,
+        repeat,
         failOnScoreDrop: opts.failOnScoreDrop,
         prices: opts.prices,
       });

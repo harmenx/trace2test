@@ -138,6 +138,57 @@ describe("replay", () => {
     expect(fail.tests[0]?.status).toBe("fail");
   });
 
+  it("flags a test that passes and fails across repeats", async () => {
+    const test = TestCaseSchema.parse({
+      id: "flip",
+      name: "flip",
+      source: { format: "openai", id: "flip" },
+      input: { messages: [{ role: "user", content: "Say ok" }] },
+      assertions: {
+        toolSequence: { expected: [] },
+        finalAnswer: [{ type: "contains", value: "ok" }],
+      },
+    });
+    let calls = 0;
+    const client: ModelClient = {
+      async complete() {
+        calls += 1;
+        return {
+          message: { role: "assistant", content: calls % 2 === 1 ? "ok" : "nope" },
+          usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 },
+        };
+      },
+    };
+    const mixed = await runSuite({
+      tests: [test],
+      model: "gpt-4o-mini",
+      client,
+      prices: DEFAULT_PRICES,
+      repeat: 2,
+    });
+    expect(mixed.tests[0]?.status).toBe("fail");
+    expect(mixed.tests[0]?.flaky).toEqual({ runs: 2, passed: 1, failed: 1 });
+    expect(mixed.summary.flaky).toBe(1);
+
+    const steady = await runSuite({
+      tests: [test],
+      model: "gpt-4o-mini",
+      client: {
+        async complete() {
+          return {
+            message: { role: "assistant", content: "ok" },
+            usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 },
+          };
+        },
+      },
+      prices: DEFAULT_PRICES,
+      repeat: 3,
+    });
+    expect(steady.tests[0]?.status).toBe("pass");
+    expect(steady.tests[0]?.flaky).toBeUndefined();
+    expect(steady.summary.flaky).toBeUndefined();
+  });
+
   it("prices dated model snapshots from the list-price table", () => {
     expect(lookupPrice("gpt-4o-mini-2024-07-18", DEFAULT_PRICES)).toEqual(DEFAULT_PRICES["gpt-4o-mini"]);
     expect(lookupPrice("gpt-4o", DEFAULT_PRICES)?.input).toBe(2.5);

@@ -22,6 +22,7 @@ export async function runCommand(options: {
   judge: boolean;
   judgeModel?: string;
   maxSteps: number;
+  repeat: number;
   failOnScoreDrop: boolean;
   prices?: string;
   client?: ModelClient;
@@ -40,6 +41,7 @@ export async function runCommand(options: {
     judge: options.judge,
     ...(options.judgeModel ? { judgeModel: options.judgeModel } : {}),
     maxSteps: options.maxSteps,
+    repeat: options.repeat,
     ...(options.now ? { now: options.now } : {}),
     ...(options.client ? {} : { baseUrl }),
   });
