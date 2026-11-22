@@ -9,6 +9,7 @@ import { loadPrices } from "../replay/pricing.js";
 import { runSuite } from "../replay/runner.js";
 import { diffResults, exitCodeFor } from "../report/diff.js";
 import { renderMarkdownReport } from "../report/markdown.js";
+import { renderJobSummary } from "../report/summary.js";
 import { renderTerminalReport } from "../report/terminal.js";
 import { parseSuiteResult, parseTestCase, type SuiteResult, type TestCase } from "../schema.js";
 import { listFiles, parseJsonText } from "../util.js";
@@ -52,8 +53,10 @@ export async function runCommand(options: {
   await mkdir(options.outDir, { recursive: true });
   const jsonPath = path.join(options.outDir, "results.json");
   const markdownPath = path.join(options.outDir, "report.md");
+  const summaryPath = path.join(options.outDir, "summary.md");
   await writeFile(jsonPath, `${JSON.stringify(result, null, 2)}\n`, "utf8");
   await writeFile(markdownPath, renderMarkdownReport(result), "utf8");
+  await writeFile(summaryPath, renderJobSummary(result), "utf8");
 
   const color = Boolean(process.stdout.isTTY) && !process.env.NO_COLOR;
   console.log(renderTerminalReport(result, { color }));
