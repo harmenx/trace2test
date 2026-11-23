@@ -36,6 +36,7 @@ describe("cli", () => {
       const results = JSON.parse(await readFile(path.join(outDir, "results.json"), "utf8")) as { summary: { passed: number } };
       expect(results.summary.passed).toBe(3);
       expect(await readFile(path.join(outDir, "report.md"), "utf8")).toContain("# trace2test report");
+      expect(await readFile(path.join(outDir, "summary.md"), "utf8")).toContain("## trace2test");
 
       const weather = (await readdir(testsDir)).find((file) => file.includes("weather"));
       if (!weather) throw new Error("weather test was not written");
