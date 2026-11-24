@@ -1,0 +1,87 @@
+name: trace2test
+description: Replay recorded agent sessions and fail the job on regressions.
+inputs:
+  tests:
+    description: YAML test file or directory
+    required: true
+    default: tests
+  model:
+    description: Model id sent to the endpoint
+    required: true
+  baseline:
+    description: Previous results.json. When set, the job fails only on new failures.
+    required: false
+    default: ""
+  base-url:
+    description: OpenAI-compatible base URL, including /v1. Defaults to OPENAI_BASE_URL or the public OpenAI API.
+    required: false
+    default: ""
+  out:
+    description: Directory for results.json, report.md, and summary.md
+    required: false
+    default: trace2test-results
+  fail-on-score-drop:
+    description: Treat a drop in tool-sequence similarity as a regression ("true" or "false")
+    required: false
+    default: "false"
+  max-steps:
+    description: Maximum model calls per test
+    required: false
+    default: "8"
+  artifact-name:
+    description: Artifact name for the markdown and JSON reports
+    required: false
+    default: trace2test-report
+runs:
+  using: composite
+  steps:
+    - name: Replay tests
+      shell: bash
+      env:
+        TRACE2TEST_TESTS: ${{ inputs.tests }}
+        TRACE2TEST_MODEL: ${{ inputs.model }}
+        TRACE2TEST_BASELINE: ${{ inputs.baseline }}
+        TRACE2TEST_BASE_URL_INPUT: ${{ inputs.base-url }}
+        TRACE2TEST_OUT: ${{ inputs.out }}
+        TRACE2TEST_FAIL_ON_SCORE_DROP: ${{ inputs.fail-on-score-drop }}
+        TRACE2TEST_MAX_STEPS: ${{ inputs.max-steps }}
+      run: |
+        set -euo pipefail
+        if [ -n "${TRACE2TEST_BASE_URL_INPUT}" ]; then
+          export TRACE2TEST_BASE_URL="${TRACE2TEST_BASE_URL_INPUT}"
+        fi
+        args=(
+          run "${TRACE2TEST_TESTS}"
+          --model "${TRACE2TEST_MODEL}"
+          --out "${TRACE2TEST_OUT}"
+          --max-steps "${TRACE2TEST_MAX_STEPS}"
+        )
+        if [ -n "${TRACE2TEST_BASELINE}" ]; then
+          args+=(--baseline "${TRACE2TEST_BASELINE}")
+        fi
+        if [ "${TRACE2TEST_FAIL_ON_SCORE_DROP}" = "true" ]; then
+          args+=(--fail-on-score-drop)
+        fi
+        node "${GITHUB_ACTION_PATH}/dist/cli.js" "${args[@]}"
+
+    - name: Publish the job summary
+      if: always()
+      shell: bash
+      env:
+        TRACE2TEST_OUT: ${{ inputs.out }}
+      run: |
+        set -euo pipefail
+        summary="${TRACE2TEST_OUT}/summary.md"
+        if [ -n "${GITHUB_STEP_SUMMARY:-}" ] && [ -f "${summary}" ]; then
+          cat "${summary}" >> "${GITHUB_STEP_SUMMARY}"
+        fi
+
+    - name: Upload the report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: |
+          ${{ inputs.out }}/report.md
+          ${{ inputs.out }}/results.json
+        if-no-files-found: warn
