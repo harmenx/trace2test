@@ -1,0 +1,30 @@
+# Copy this file to .github/workflows/trace2test.yml.
+# Build the CLI first: the composite action runs dist/cli.js from this repo.
+# Commit a known-good results.json and pass it as `baseline` to fail only on new failures.
+name: Agent regressions
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  trace2test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - uses: ./
+        with:
+          tests: examples/tests
+          model: gpt-4o-mini
+          baseline: trace2test-baseline/results.json
+          fail-on-score-drop: "false"
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          # Optional. Set this for an OpenAI-compatible endpoint.
+          # OPENAI_BASE_URL: https://api.openai.com/v1
