@@ -1,8 +1,7 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import { parse } from "yaml";
-
+import { loadBaseline, loadTestCases } from "../cases.js";
 import { Trace2TestError } from "../errors.js";
 import { createOpenAIClient, type ModelClient } from "../replay/client.js";
 import { loadPrices } from "../replay/pricing.js";
@@ -11,8 +10,7 @@ import { diffResults, exitCodeFor } from "../report/diff.js";
 import { renderMarkdownReport } from "../report/markdown.js";
 import { renderJobSummary } from "../report/summary.js";
 import { renderTerminalReport } from "../report/terminal.js";
-import { parseSuiteResult, parseTestCase, type SuiteResult, type TestCase } from "../schema.js";
-import { listFiles, parseJsonText } from "../util.js";
+import type { SuiteResult } from "../schema.js";
 
 export async function runCommand(options: {
   inputs: string[];
@@ -29,7 +27,7 @@ export async function runCommand(options: {
   client?: ModelClient;
   now?: Date;
 }): Promise<{ exitCode: number; result: SuiteResult }> {
-  const tests = await loadTests(options.inputs);
+  const tests = await loadTestCases(options.inputs);
   const baseUrl = options.baseUrl ?? process.env.TRACE2TEST_BASE_URL ?? process.env.OPENAI_BASE_URL ?? "https://api.openai.com/v1";
   const apiKey = options.apiKey ?? process.env.TRACE2TEST_API_KEY ?? process.env.OPENAI_API_KEY ?? "";
   const client = options.client ?? createOpenAIClient({ apiKey: requiredKey(apiKey), baseUrl });
@@ -68,41 +66,6 @@ export async function runCommand(options: {
     exitCode: exitCodeFor(result, { baseline: Boolean(options.baseline), failOnScoreDrop: options.failOnScoreDrop }),
     result,
   };
-}
-
-async function loadTests(inputs: string[]): Promise<TestCase[]> {
-  const files = await listFiles(inputs, [".yaml", ".yml"]);
-  if (files.length === 0) throw new Trace2TestError("No YAML tests found.");
-  const tests: TestCase[] = [];
-  for (const file of files) {
-    let text: string;
-    try {
-      text = await readFile(file, "utf8");
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      throw new Trace2TestError(`Could not read ${file}: ${message}`);
-    }
-    let data: unknown;
-    try {
-      data = parse(text);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      throw new Trace2TestError(`${file} is not valid YAML: ${message}`);
-    }
-    tests.push(parseTestCase(data, file));
-  }
-  return tests;
-}
-
-async function loadBaseline(file: string): Promise<SuiteResult> {
-  let text: string;
-  try {
-    text = await readFile(file, "utf8");
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new Trace2TestError(`Could not read baseline ${file}: ${message}`);
-  }
-  return parseSuiteResult(parseJsonText(text, file), file);
 }
 
 function requiredKey(apiKey: string): string {
