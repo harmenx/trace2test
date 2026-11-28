@@ -7,6 +7,7 @@ import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
 
 import { loadTestCases } from "../src/cases.js";
+import { main } from "../src/cli.js";
 import { renderPytestModule } from "../src/export/pytest.js";
 
 const exec = promisify(execFile);
@@ -24,5 +25,13 @@ describe("pytest export", () => {
     const file = path.join(dir, "test_agent_sessions.py");
     await writeFile(file, source, "utf8");
     await exec("python3", ["-m", "py_compile", file]);
+  });
+
+  it("writes a pytest file from the CLI", async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), "trace2test-export-"));
+    const file = path.join(dir, "test_agent_sessions.py");
+    expect(await main(["node", "trace2test", "export", "examples/tests", "--format", "pytest", "--out", file])).toBe(0);
+    await exec("python3", ["-m", "py_compile", file]);
+    expect(await main(["node", "trace2test", "export", "examples/tests", "--format", "junit", "--out", file])).toBe(1);
   });
 });
